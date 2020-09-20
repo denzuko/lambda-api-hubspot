@@ -1,0 +1,8 @@
+Eve
+eve-healthcheck
+Eve-Swagger
+Eve-SQLAlchemy
+eve-auth-jwt-fork
+HubSpot
+boto3
+cloudwatch
