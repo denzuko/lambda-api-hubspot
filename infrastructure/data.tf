@@ -11,3 +11,8 @@ data "aws_iam_policy_document" "lambda_exec_role_policy" {
   }
 }
 
+data "archive_file" "init" {
+  type        = "zip"
+  source_dir = "${path.module}/../src"
+  output_path = "${path.module}/files/init.zip"
+}
