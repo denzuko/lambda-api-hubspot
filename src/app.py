@@ -9,14 +9,16 @@ import botocore.exceptions
 
 from cloudwatch import CloudwatchHandler
 
-from .models import Contacts
-
 from eve import Eve
 from eve_swagger import get_swagger_blueprint, add_documentation
 from eve_healthcheck import EveHealthCheck
+from eve_auth_jwt import JWTAuth
+
 from eve_sqlalchemy.validation import ValidatorSQL
 from eve_sqlalchemy import SQL
 from sqlalchemy.ext.declaritive import declaritive_base
+
+from .models import Contacts
 
 from flask import current_app
 
@@ -64,6 +66,8 @@ def Settings(key):
             'ITEM_METHODS': ['GET', 'PATCH', 'DELETE'],
             'RESOURCE_METHODS': ['GET'],
             'DOMAIN': Domain(),
+            #'JWT_SECRET': get_secret('JWT_SECRET'), key from provider
+            #'JWT_ISSUER': get_secret('JWT_ISSUER'), provider fqdn
             'secrets': {
                 'AWS_KEY_ID': os.getenv('AWS_KEY_ID',''),
                 'AWS_SECRET_KEY': os.getenv('AWS_SECRET_KEY',''),
@@ -125,6 +129,7 @@ def Main(environ, start_response):
     password = get_secret('mysql-password')
     username = get_secret('mysql-username')
 
+    #instance = Eve(logger=Logger(), settings=Settings(), validator=ValidatorSQL, data=SQL, auth=JWTAuth)
     instance = Eve(logger=Logger(), settings=Settings(), validator=ValidatorSQL, data=SQL)
     instance.on_post_GET += log_get
     instance.register_blueprint(get_swagger_blueprint())
