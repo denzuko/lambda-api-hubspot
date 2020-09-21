@@ -24,9 +24,9 @@ class Contact(Base):
     id = Column(String)
 
     @validates('id')
-    def isContactId 
+    def isContactId()
         try:
             contact_fetched = HubspotClient.crm.contacts.basic_api.get_by_id('contact_id')
-            return id is contact_fetched
+            return (id is contact_fetched)
         except ApiException as err:
             current_app.logger.error(err)

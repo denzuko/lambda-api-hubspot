@@ -89,7 +89,7 @@ def Logger():
         Secrets('AWS_SECRET_KEY'),
         Secrets('AWS_REGION'),
         Secrets('AWS_LOG_GROUP'),
-        Secret('AWS_LOG_STREAM')
+        Secrets('AWS_LOG_STREAM')
     )
 
     logger = logging.getLogger(OpenApi('title'))
