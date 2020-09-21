@@ -95,15 +95,8 @@ jobs:
         run: npx newman run ${{ secrets.POSTMAN_COLLECTION }}
         env:
           POSTMAN_API_KEY_ALIAS: ${{ secrets.POSTMAN_API_KEY_ALIAS }}
-
-  security:
-    name: "Security Check"
-    runs-on: ubumtu-latest
-    needs: [qa, terraform]
-    steps:
       - name: Test for public vulnerablilties
         use: npx is-website-vulnerable
         with:
-        scan-url: "https:/example.com/"
-
+          scan-url: "https:/example.com/"
 ...
