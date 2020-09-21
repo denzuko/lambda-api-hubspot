@@ -142,6 +142,7 @@ def Main(environ, start_response):
     healthcheck = EveHealthCheck(instance, '/healthcheck')
 
     database = instance.data.driver
+    Base = declarative_base()
     Base.metadata.bind = database.engine
     database.Model = Base 
     database.create_all()
