@@ -1,1 +1,1 @@
-import .Contacts
+from . import Contacts

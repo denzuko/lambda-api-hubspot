@@ -1,6 +1,6 @@
 #!/usr/bin/which python3
 import os
-import base64
+from base64 import b64decode
 import logging
 
 import boto3
@@ -23,77 +23,83 @@ from .models import Contacts
 from flask import current_app
 
 def Domain():
-    return {
-        'contact': {
-            'item_title': 'contact',
-            'description': 'Creates a contact record',
-            'schema': { 
-                'fullName':  dict(type=str(),minlength=1,maxlength=256,required=True),
-                'email': dict(type=str(), minlength=4,maxlength=512,required=True)
-            }
-        }
-    }
+    return dict(contact=dict(
+        item_title=str("contact"),
+        description=str("Creates a contact record"),
+        schema=dict(
+            fullName=dict(type=str(),minlength=1,maxlength=256,required=True),
+            email=dict(type=str(), minlength=4,maxlength=512,required=True)
+    )))
 
-def OpenApi():  
-    return  {
-        'title': os.getenv('AWS_LAMBDA_FUNCTION_NAME',__file__),
-        'version': '1.0',
-        'description': '',
-        'termsOfService': '',
-        'contact': {
-            'name': 'Dwight Spencer',
-            'url': 'https://dwightaspencer.com/'
-        },
-        'license': {
-            'name': 'BSD',
-            'url': 'https://opensource.org/licenses/BSD-2-Clause'
-        },
-        'schemes': ['http', 'https']
-    }
+def OpenApi(key):  
+    openapi = dict(
+        title=str(os.getenv('AWS_LAMBDA_FUNCTION_NAME',__file__)),
+        version=str('1.0'),
+        descripton=str(None),
+        termsOfService=str(None),
+        contact=dict(
+            name=str('Dwight Spencer'),
+            url=str('https://dwightaspencer.com/')),
+        licence=dict(name=str('BSD'),
+            url=str('https://opensource.org/licenses/BSD-2-Clause')),
+        schemes=list(str('http'),str('https')))
+
+    return openapi.get(key, openapi)
+
+def Secrets(key):
+    secrets = dict(
+        AWS_KEY_ID=str(os.getenv('AWS_KEY_ID','')),
+        AWS_SECRET_KEY=str(os.getenv('AWS_SECRET_KEY','')),
+        AWS_REGION=str(os.getenv('AWS_REGION','')),
+        AWS_LOG_GROUP=str(os.getenv('AWS_LOG_GROUP','')),
+        AWS_LOG_STREAM=str(os.getenv('AWS_LOG_STREAM','')))
+
+    return secrets.get(key, secrets)
 
 def Settings(key):
-    settings = {
-            'X_DOMAINS': ['*'],
-            'X_HEADERS': ['Origin', 'X-Requested-With', 'Content-Type', 'If-Match', 'Authorization'],
-            'RENDERERS': ['eve.render.JSONRenderer'],
-            'JSON_SORT_KEYS': True,
-            'JSONP_ARGUMENT': 'callback',
-            'SCHEMA_ENDPOINT ': '/schema',
-            'SWAGGER_INFO':  OpenApi(),
-            'SWAGGER_EXAMPLE_FIELD_REMOVE': True,
-            'TRANSPARENT_SCHEMA_RULES': True,
-            'X_ALLOW_CREDENTIALS': True,
-            'ITEM_METHODS': ['GET', 'PATCH', 'DELETE'],
-            'RESOURCE_METHODS': ['GET'],
-            'DOMAIN': Domain(),
-            #'JWT_SECRET': get_secret('JWT_SECRET'), key from provider
-            #'JWT_ISSUER': get_secret('JWT_ISSUER'), provider fqdn
-            'secrets': {
-                'AWS_KEY_ID': os.getenv('AWS_KEY_ID',''),
-                'AWS_SECRET_KEY': os.getenv('AWS_SECRET_KEY',''),
-                'AWS_REGION': os.getenv('AWS_REGION',''),
-                'AWS_LOG_GROUP': os.getenv('AWS_LOG_GROUP',''),
-                'AWS_LOG_STREAM': os.getenv('AWS_LOG_STREAM','')
-            }
-    }
+    #'JWT_SECRET': get_secret('JWT_SECRET'), key from provider
+    #'JWT_ISSUER': get_secret('JWT_ISSUER'), provider fqdn
+
+    settings = dict(
+            X_DOMAINS=list(str('*')),
+            X_HEADERS=list(
+                str('Origin'), 
+                str('X-Requested-With'), 
+                str('Content-Type'),
+                str('If-Match'), 
+                str('Authoriziation')),
+            RENDERERS=list(str('eve.render.JSONRenderer')),
+            JSON_SORT_KEYS=bool(True),
+            JSONP_ARUGMENT=str('callback'),
+            SCHEMA_ENDPOINT=str('/schema'),
+            SWAGGER_INFO=OpenApi(),
+            SWAGGER_EXAMPLE_FIELD_REMOVE=bool(True),
+            TRANSPARENT_SCHEMA_RULES=bool(True),
+            X_ALLOW_CREDENTIALS=bool(True),
+            ITEM_METHODS=list(str('GET'), str('PATCH'), str('DELETE')),
+            RESOURCE_METHODS=list(str('GET')),
+            DOMAIN=Domain(),
+            secrets=Secrets())
 
     return settings.get(key, settings)
 
 def Logger():
-    logger = logging.getLogger(Settings('SWAGGER_INFO')['title'])
-    logger.addHandler(CloudwatchHandler(
-        Settings('secrets')['AWS_KEY_ID'],
-        Settings('secrets')['AWS_SECRET_KEY'],
-        Settings('secrets')['AWS_REGION'],
-        Settings('secrets')['AWS_LOG_GROUP'],
-        Settings('secrets')['AWS_LOG_STREAM'],
-    ))
+    handler = CloudwatchHandler(
+        Secrets('AWS_KEY_ID'),
+        Secrets('AWS_SECRET_KEY'),
+        Secrets('AWS_REGION'),
+        Secrets('AWS_LOG_GROUP'),
+        Secret('AWS_LOG_STREAM')
+    )
+
+    logger = logging.getLogger(OpenApi('title'))
+    logger.addHandler(handler)
     logger.setLevel(logging.INFO)
     logger.setFormatter(logging.Formatter(
         '%(asctime)s %(levelname)s: %(message)s '
         '[in %(filename)s:%(lineno)d] -- ip: %(clientip)s, '
-        'url: %(url)s, method:%(method)s')
-    )
+        'url: %(url)s, method:%(method)s'))
+
     return logger
 
 def log_get(resource, request, payload):
@@ -113,16 +119,16 @@ def get_secret(secret_name):
 
     except botocore.exceptions.ClientError as err:
         if err.response['Error']['Code'] in (
-                'DecryptionFailureException',
-                'InternalServiceErrorException',
-                'InvalidParameterException',
-                'InvalidRequestException',
-                'ResourceNotFoundException'):
+            'DecryptionFailureException',
+            'InternalServiceErrorException',
+            'InvalidParameterException',
+            'InvalidRequestException',
+            'ResourceNotFoundException'):
             Logger().error(err.response['Error']['Code'])
         else:
             return secret.get('SecretString', b64decode(secret['SecretBinary']))
 
-    except botocoro.exceptions.ParamValidationError as error:
+    except botocore.exceptions.ParamValidationError as error:
             Logger().error('invalid parameter: {}'.format(error))
 
 def Main(environ, start_response):
@@ -136,10 +142,10 @@ def Main(environ, start_response):
     healthcheck = EveHealthCheck(instance, '/healthcheck')
 
     database = instance.data.driver
-    Base.metadata.bind = db.engine
-    db.Model = Base 
-    db.create_all()
-    db.session.commit()
+    Base.metadata.bind = database.engine
+    database.Model = Base 
+    database.create_all()
+    database.session.commit()
 
     def runner():
         instance.run(use_reloader=False)
