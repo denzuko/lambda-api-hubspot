@@ -94,7 +94,7 @@ jobs:
         env:
           POSTMAN_API_KEY_ALIAS: ${{ secrets.POSTMAN_API_KEY_ALIAS }}
       - name: Test for public vulnerablilties
-        use: npx is-website-vulnerable
+        uses: npx is-website-vulnerable
         with:
           scan-url: "https:/example.com/"
 ...
