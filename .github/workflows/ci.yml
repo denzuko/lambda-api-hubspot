@@ -102,10 +102,21 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+
       - run: npm ci
+
       - name: Execute Postman tests
         run: npx newman run ${{ secrets.POSTMAN_COLLECTION }}
         env:
           POSTMAN_API_KEY_ALIAS: ${{ secrets.POSTMAN_API_KEY_ALIAS }}
 
+
+  security:
+    name: Security Check
+    runs-on: ubumtu-latest
+    steps:
+      - name: Test for public vulnerablilties
+        use: npx is-website-vulnerable
+        with:
+          scan-url: "https:/example.com/"
 ...
