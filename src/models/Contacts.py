@@ -1,32 +1,36 @@
-import hashlab
-import string
-import random
-
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from itsdangerous import SignatureExpired, BadSignature
-
-from sqlalchemy.orm import validates
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql.schema import Column
-from sqlalchemy.types import String
+from sqlalchemy.orm import relationship, validates
 
-from hubspot import HubSpot
+from hubspot3 import HubSpot3 as HubSpot
 
 from flask import current_app as app
 
-Base = declarative_base()
+from . import BaseModel
+
 HubspotClient = HubSpot(api_key=app.config['secrets']['HUBSPOT_API_KEY'])
 
-class Contact(Base):
+class Contact(BaseModel):
     __tablename__ = 'contacts'
 
-    email = Column(String, primary_key=True)
-    id = Column(String)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    crm_id = Column(String(255))
+    email = Column(String(255))
 
-    @validates('id')
+    @validates('crm_id')
     def isContactId():
         try:
-            contact_fetched = HubspotClient.crm.contacts.basic_api.get_by_id('contact_id')
-            return (id is contact_fetched)
+            contact_fetched = HubspotClient.contacts.get_contact_by_email(self.email)
+            return (id is contact_fetched['vid'])
         except ApiException as err:
             app.logger.error(err)
+
+    @classmethod
+    def create(cls, **kw):
+        obj = cls(**kw)
+
+        self.crm_id = HubSpotClient.contacts.get_contact_by_email(self.email)
+
+        db.session.add(obj)
+        db.session.commit()
+

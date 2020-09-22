@@ -3,6 +3,7 @@ eve-healthcheck
 Eve-Swagger
 Eve-SQLAlchemy
 eve-auth-jwt-fork
-HubSpot
+HubSpot3
+celery
 boto3
 cloudwatch

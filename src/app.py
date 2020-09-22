@@ -12,25 +12,19 @@ from cloudwatch import CloudwatchHandler
 from eve import Eve
 from eve_swagger import get_swagger_blueprint, add_documentation
 from eve_healthcheck import EveHealthCheck
-from eve_auth_jwt import JWTAuth
 
-from eve_sqlalchemy.validation import ValidatorSQL
 from eve_sqlalchemy import SQL
-from sqlalchemy.ext.declaritive import declaritive_base
+from eve_sqlalchemy.config import DomainConfig, ResourceConfig
+from eve_sqlalchemy.validation import ValidatorSQL
 
 from .models import Contacts
 
 from flask import current_app
 
 def Domain():
-    return dict(contact=dict(
-        item_title=str("contact"),
-        description=str("Creates a contact record"),
-        schema=dict(
-            fullName=dict(type=str(),minlength=1,maxlength=256,required=True),
-            email=dict(type=str(), minlength=4,maxlength=512,required=True)
-    )))
-
+    return DomainConfig(dict(
+        contacts=ResourceConfig(Contacts)))
+        
 def OpenApi(key):  
     openapi = dict(
         title=str(os.getenv('AWS_LAMBDA_FUNCTION_NAME',__file__)),
@@ -135,7 +129,6 @@ def Main(environ, start_response):
     password = get_secret('mysql-password')
     username = get_secret('mysql-username')
 
-    #instance = Eve(logger=Logger(), settings=Settings(), validator=ValidatorSQL, data=SQL, auth=JWTAuth)
     instance = Eve(logger=Logger(), settings=Settings(), validator=ValidatorSQL, data=SQL)
     instance.on_post_GET += log_get
     instance.register_blueprint(get_swagger_blueprint())
