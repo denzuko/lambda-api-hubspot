@@ -2,7 +2,7 @@
 import os
 from base64 import b64decode
 import logging
-
+from pytz import UTC
 import boto3
 import boto3.exceptions
 import botocore.exceptions
@@ -14,17 +14,11 @@ from eve_swagger import get_swagger_blueprint, add_documentation
 from eve_healthcheck import EveHealthCheck
 
 from eve_sqlalchemy import SQL
-from eve_sqlalchemy.config import DomainConfig, ResourceConfig
 from eve_sqlalchemy.validation import ValidatorSQL
-
-from .models import Contacts
+from .model import Base, Domain
 
 from flask import current_app
 
-def Domain():
-    return DomainConfig(dict(
-        contacts=ResourceConfig(Contacts)))
-        
 def OpenApi(key):  
     openapi = dict(
         title=str(os.getenv('AWS_LAMBDA_FUNCTION_NAME',__file__)),
@@ -42,11 +36,11 @@ def OpenApi(key):
 
 def Secrets(key):
     secrets = dict(
-        AWS_KEY_ID=str(os.getenv('AWS_KEY_ID','')),
-        AWS_SECRET_KEY=str(os.getenv('AWS_SECRET_KEY','')),
-        AWS_REGION=str(os.getenv('AWS_REGION','')),
-        AWS_LOG_GROUP=str(os.getenv('AWS_LOG_GROUP','')),
-        AWS_LOG_STREAM=str(os.getenv('AWS_LOG_STREAM','')))
+        AWS_KEY_ID=str(os.getenv('AWS_KEY_ID', get_secret('AWS_KEY_ID') || '')),
+        AWS_SECRET_KEY=str(os.getenv('AWS_SECRET_KEY', get_secret('...') || '')),
+        AWS_REGION=str(os.getenv('AWS_REGION', get_secret('...') || '')),
+        AWS_LOG_GROUP=str(os.getenv('AWS_LOG_GROUP', get_secret('...') || '')),
+        AWS_LOG_STREAM=str(os.getenv('AWS_LOG_STREAM', get_secret('...') || '')))
 
     return secrets.get(key, secrets)
 
@@ -73,6 +67,19 @@ def Settings(key):
             ITEM_METHODS=list(str('GET'), str('PATCH'), str('DELETE')),
             RESOURCE_METHODS=list(str('GET')),
             DOMAIN=Domain(),
+            CELERY=dict(
+                CELERY_TASK_SERIALIZER=str("json"),
+                CELERY_ACCEPT_CONTENT=list(str("json")),
+                CELERY_RESULT_SERIALIZER=str("json"),
+                CELERY_RESULT_BACKEND=None,
+                CELERY_TIMEZONE=UTF,
+                CELERY_ENABLE_UTC=bool(True),
+                CELERY_ENABLE_REMOTE_CONTROL=bool(False)
+                BROKER_TRANSPORT=str("sqs"),
+                BROKERY_TRANSPORT_OPTIONS=dict(
+                    region=Secrets('AWS_REGION'),
+                    visiblity_timeout=3600
+                    polling_interval=60),
             secrets=Secrets())
 
     return settings.get(key, settings)
@@ -135,7 +142,6 @@ def Main(environ, start_response):
     healthcheck = EveHealthCheck(instance, '/healthcheck')
 
     database = instance.data.driver
-    Base = declarative_base()
     Base.metadata.bind = database.engine
     database.Model = Base 
     database.create_all()

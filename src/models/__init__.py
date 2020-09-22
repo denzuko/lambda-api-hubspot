@@ -1,6 +1,11 @@
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from eve_sqlalchemy.config import DomainConfig, ResourceConfig
+
+from flask import current_app as instancce
+
+from . import Contacts
 
 Base = declarative_base()
 
@@ -10,4 +15,14 @@ class BaseModel(Base):
     _updated = Column(DateTime, default=func.now(), onupdate=func.now())
     _etag = Column(String(40))
 
-from . import Contacts
+class BaseMixin(object):
+    @classmethod
+    def create(cls, **kw):
+        obj = cls(**kw)
+
+        instance.data.driver.session.add(obj)
+        instance.data.driver.session.commit()
+
+def Domain():
+    return DomainConfig(dict(
+        contacts=ResourceConfig(Contacts)))
