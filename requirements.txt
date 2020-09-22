@@ -5,6 +5,6 @@ Eve-SQLAlchemy
 eve-auth-jwt-fork
 HubSpot3
 celery[sqs]
-celery
 boto3
 cloudwatch
+pytz
