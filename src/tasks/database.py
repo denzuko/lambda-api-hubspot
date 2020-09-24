@@ -1,7 +1,10 @@
 from celery import Task
 from sqlalchemy.orm.exc import NoResultFound
 from flask import current_app as app
+from boto3 import client
+from urllib.parse import parse
 
+queue_url = parse('SQS_QUEUE_URL')
 from ..models import Contact
 
 class SqlTask(Task):
@@ -28,13 +31,31 @@ def add_contact():
     """
     dbsession = app.data.driver.session
     logger    = app.logger
+    sqs       = client('sqs')
+    
+    try:
+        response = sqs.recieved_message(
+                QueueUrl=app.config['SQS_URL'],
+                AttributeNames=[
+                    'SentTimestamps'
+                ],
+                MaxNumbersOfMessages=1,
+                MessageAttributeNames=['Body']
+                VisibilityTimeout=0,
+                WaitTimeSeconds=0)
+        message = response['Messages']
+        receipt_handle = message['ReceiptHandle']
+        sqs.delete_message(QueueUrl=app.config['SQS_URL'], ReceiptHandle=receipt_handle)
+
+    print('Received and deleted message: %s' % message)
 
     try:
         dbsession.add(Contact(
-            email="james.johnson@example.com"))
+            email=message['BODY']['email'] ))
         dbsession.commit()
         dbsession.flush()
         return True
+
     except sqlalchemy.exc.SQLAlchemyError as err:
         logger.error(err.args)
         dbsession.rollback()
