@@ -10,6 +10,7 @@ from urllib.parse import parse
 
 queue_url = parse('SQS_QUEUE_URL')
 from ..models import Contact
+from . import mq
 
 class SqlTask(Task):
 	"""
@@ -20,7 +21,7 @@ class SqlTask(Task):
 	def after_return(self, status, retval, task_id, args, kwargs, einfo):
 		app.data.driver.session.remove()
 
-@celery.task(base=SqlTask, max_retries=10, default_retry_delay=60)
+@mq.task(base=SqlTask, max_retries=10, default_retry_delay=60)
 def get_contact_from_database(contact_id):
 	try:
 		user = app.data.driver.session(Contacts).Filter(Contact.id=contact_id).one()
@@ -28,7 +29,7 @@ def get_contact_from_database(contact_id):
 	except NoResultFound as err:
 		raise get_contact_from_database.retry(exc=err)
 
-@celery.task(base=SqlTask, max_retries=10, default_retry_delay=60)
+@mq.task(base=SqlTask, max_retries=10, default_retry_delay=60)
 def add_contact():
     """
     todo: pull object from sqs
@@ -51,7 +52,7 @@ def add_contact():
         receipt_handle = message['ReceiptHandle']
         sqs.delete_message(QueueUrl=app.config['SQS_URL'], ReceiptHandle=receipt_handle)
 
-    print('Received and deleted message: {}'.format(message))
+    print(f"Received and deleted message: {message}")
 
     try:
         dbsession.add(Contact(

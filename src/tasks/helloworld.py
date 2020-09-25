@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 
 from celery import Celery, current_task, Task
 
-@celery.task
+from . import mq
+
+@mq.task
 def helloWorld():
     import time
     time.sleep(20)
