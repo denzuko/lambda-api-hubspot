@@ -50,10 +50,10 @@ def add_contact():
                 WaitTimeSeconds=0)
         message = response['Messages']
         receipt_handle = message['ReceiptHandle']
-        sqs.delete_message(QueueUrl=app.config['SQS_URL'], ReceiptHandle=receipt_handle)
+        sqs.delete_message(QueueUrl=app.config['SQS_URL'], 
+                ReceiptHandle=receipt_handle)
         logger.info(f"Received and deleted message: {message}")
 
-    try:
         dbsession.add(Contact(
             email=message['BODY']['email'] ))
         dbsession.commit()
