@@ -51,8 +51,7 @@ def add_contact():
         message = response['Messages']
         receipt_handle = message['ReceiptHandle']
         sqs.delete_message(QueueUrl=app.config['SQS_URL'], ReceiptHandle=receipt_handle)
-
-    print(f"Received and deleted message: {message}")
+        logger.info(f"Received and deleted message: {message}")
 
     try:
         dbsession.add(Contact(
