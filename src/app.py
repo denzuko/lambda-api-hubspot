@@ -37,11 +37,11 @@ def OpenApi(key):
 
 def Secrets(key):
     secrets = dict(
-        AWS_KEY_ID=str(os.getenv("AWS_KEY_ID", get_secret("AWS_KEY_ID") || "")),
-        AWS_SECRET_KEY=str(os.getenv("AWS_SECRET_KEY", get_secret("AWS_SECRET_KEY") || "")),
-        AWS_REGION=str(os.getenv("AWS_REGION", get_secret("AWS_REGION") || "")),
-        AWS_LOG_GROUP=str(os.getenv("AWS_LOG_GROUP", get_secret("AWS_LOG_GROUP") || "")),
-        AWS_LOG_STREAM=str(os.getenv("AWS_LOG_STREAM", get_secret("AWS_LOG_STREAM") || "")))
+        AWS_KEY_ID=str(os.getenv("AWS_KEY_ID"), get_secret("AWS_KEY_ID") || "")),
+        AWS_SECRET_KEY=str(os.getenv("AWS_SECRET_KEY"), get_secret("AWS_SECRET_KEY")) || "")),
+        AWS_REGION=str(os.getenv("AWS_REGION"), get_secret("AWS_REGION")) || "")),
+        AWS_LOG_GROUP=str(os.getenv("AWS_LOG_GROUP"), get_secret("AWS_LOG_GROUP")) || "")),
+        AWS_LOG_STREAM=str(os.getenv("AWS_LOG_STREAM"), get_secret("AWS_LOG_STREAM")) || "")))
 
     return secrets.get(key, secrets)
 
@@ -131,7 +131,7 @@ def get_secret(secret_name):
             return secret.get("SecretString", b64decode(secret["SecretBinary"]))
 
     except botocore.exceptions.ParamValidationError as error:
-            currnet_app.error(f"invalid parameter: {error}")
+            current_app.error(f"invalid parameter: {error}")
 
 def Main(environ, start_response):
     password = get_secret("mysql-password")
@@ -140,6 +140,7 @@ def Main(environ, start_response):
     instance = Eve(logger=Logger(), settings=Settings(), validator=ValidatorSQL, data=SQL)
     instance.on_post_GET += log_get
     instance.register_blueprint(get_swagger_blueprint())
+
     healthcheck = EveHealthCheck(instance, "/healthcheck")
 
     database = instance.data.driver
