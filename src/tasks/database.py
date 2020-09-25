@@ -28,7 +28,7 @@ def get_contact_from_database(contact_id):
     session = app.data.driver.session
 
     try:
-        return session(Contact).Filter(Contact.id=contact_id).one()
+        return session(Contact).Filter(Contact.id == contact_id).one()
 
     except NoResultFound as err:
         raise get_contact_from_database.retry(exc=err)
