@@ -9,3 +9,4 @@ celery
 boto3
 cloudwatch
 pytz
+sqlalchemy
