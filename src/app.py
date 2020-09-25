@@ -46,9 +46,6 @@ def Secrets(key):
     return secrets.get(key, secrets)
 
 def Settings(key):
-    #'JWT_SECRET': get_secret('JWT_SECRET'), key from provider
-    #'JWT_ISSUER': get_secret('JWT_ISSUER'), provider fqdn
-
     settings = dict(
             X_DOMAINS=list(str("*")),
             X_HEADERS=list(
