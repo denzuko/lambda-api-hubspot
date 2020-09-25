@@ -1,6 +1,5 @@
-#!/usr/bin/which python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
 from celery import Celery, current_task, Task
 
