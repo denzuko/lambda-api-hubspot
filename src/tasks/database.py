@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 from celery import Task
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import SQLAlchemyError
 from flask import current_app as app
 from boto3 import client
 from urllib.parse import parse
@@ -64,7 +65,7 @@ def add_contact():
         dbsession.flush()
         return True
 
-    except sqlalchemy.exc.SQLAlchemyError as err:
+    except SQLAlchemyError as err:
         logger.error(err.args)
         dbsession.rollback()
         return False
