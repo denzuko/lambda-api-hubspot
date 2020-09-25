@@ -40,7 +40,7 @@ def add_contact():
                     'SentTimestamps'
                 ],
                 MaxNumbersOfMessages=1,
-                MessageAttributeNames=['Body']
+                MessageAttributeNames=['Body'],
                 VisibilityTimeout=0,
                 WaitTimeSeconds=0)
         message = response['Messages']

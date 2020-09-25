@@ -1,4 +1,4 @@
-from celery import Celery, current_task
+from celery import Celery, current_task, Task
 
 @celery.task
 def helloWorld():

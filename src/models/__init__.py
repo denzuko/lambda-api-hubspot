@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from eve_sqlalchemy.config import DomainConfig, ResourceConfig
 
-from flask import current_app as instancce
+from flask import current_app as instance
 
 from . import Contacts
 
@@ -26,3 +26,5 @@ class BaseMixin(object):
 def Domain():
     return DomainConfig(dict(
         contacts=ResourceConfig(Contacts)))
+
+__all__ = (Domain, Contacts, )
