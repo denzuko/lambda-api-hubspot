@@ -9,6 +9,7 @@ from boto3 import client
 from urllib.parse import parse
 
 queue_url = parse('SQS_QUEUE_URL')
+
 from ..models import Contact
 from . import mq
 
@@ -19,15 +20,18 @@ class SqlTask(Task):
 	abstract = True
 
 	def after_return(self, status, retval, task_id, args, kwargs, einfo):
-		app.data.driver.session.remove()
+            session = app.data.driver.session
+            session.remove()
 
 @mq.task(base=SqlTask, max_retries=10, default_retry_delay=60)
 def get_contact_from_database(contact_id):
-	try:
-		user = app.data.driver.session(Contacts).Filter(Contact.id=contact_id).one()
-		return user
-	except NoResultFound as err:
-		raise get_contact_from_database.retry(exc=err)
+    session = app.data.driver.session
+
+    try:
+        return session(Contact).Filter(Contact.id=contact_id).one()
+
+    except NoResultFound as err:
+        raise get_contact_from_database.retry(exc=err)
 
 @mq.task(base=SqlTask, max_retries=10, default_retry_delay=60)
 def add_contact():
