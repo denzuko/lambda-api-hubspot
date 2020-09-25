@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from celery import Task
 from sqlalchemy.orm.exc import NoResultFound
 from flask import current_app as app
@@ -47,7 +51,7 @@ def add_contact():
         receipt_handle = message['ReceiptHandle']
         sqs.delete_message(QueueUrl=app.config['SQS_URL'], ReceiptHandle=receipt_handle)
 
-    print('Received and deleted message: %s' % message)
+    print('Received and deleted message: {}'.format(message))
 
     try:
         dbsession.add(Contact(
