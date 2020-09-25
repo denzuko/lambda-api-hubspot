@@ -27,7 +27,7 @@ jobs:
         env:
           DEBIAN_FRONTEND: "noninteractive"
         run: |
-          apt-get install -y libssl-dev libcurl4-openssl-dev python3-dev
+          sudo apt-get install -y libssl-dev libcurl4-openssl-dev python3-dev
           python -m pip install --upgrade pip
           pip install flake8 pytest
           pip install -r requirements.txt
